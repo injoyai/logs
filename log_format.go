@@ -3,7 +3,6 @@ package logs
 import (
 	"bytes"
 	"log"
-	"strings"
 )
 
 /*
@@ -39,10 +38,14 @@ func (this *formatter) Formatter(e *Entity, msg string) string {
 		return this.formatter(e, msg)
 	}
 	writer := bytes.NewBuffer(nil)
-	if len(e.Tag) > 0 {
-		tag := strings.Join(e.Tag, "][")
-		msg = tag[1:len(tag)-1] + " " + msg
+	var tag string
+	for i, v := range e.Tag {
+		tag += "[" + v + "]"
+		if i == len(e.Tag)-1 {
+			tag += " "
+		}
 	}
+	msg = tag + msg
 	prefix := ""
 	if len(e.Name) > 0 {
 		prefix = "[" + e.Name + "]"
