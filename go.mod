@@ -1,4 +1,4 @@
-module github/injoyai/logs
+module github.com/injoyai/logs
 
 go 1.15
 
