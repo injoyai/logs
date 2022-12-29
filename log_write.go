@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -34,6 +35,7 @@ func NewWriteColor(writer io.Writer) io.Writer { return &writeColor{writer} }
 type stdout struct {
 	io.Writer
 	Hook *hook
+	once sync.Once
 }
 
 func (this *stdout) Write(p []byte) (int, error) {
@@ -48,21 +50,26 @@ func (this *stdout) Write(p []byte) (int, error) {
 // Color 暂时用这个方法判断是否支持颜色
 func (this *stdout) Color() bool { return true }
 
-// newStdout 新建带Hook的标准输出
-func newStdout() io.Writer {
-	s := &stdout{Writer: os.Stdout, Hook: newHook()}
-	go func(s *stdout) {
-		for {
-			var input string
-			log.Println("请输入筛选条件(暂时只支持正则):")
-			fmt.Scanln(&input)
-			if s.Hook != nil {
-				if err := s.Hook.Regexp(input); err != nil {
-					fmt.Println("筛选条件错误:", err)
+func (this *stdout) Input() {
+	this.once.Do(func() {
+		go func(s *stdout) {
+			for {
+				var input string
+				log.Println("请输入筛选条件(暂时只支持正则):")
+				fmt.Scanln(&input)
+				if s.Hook != nil {
+					if err := s.Hook.Regexp(input); err != nil {
+						fmt.Println("筛选条件错误:", err)
+					}
 				}
 			}
-		}
-	}(s)
+		}(this)
+	})
+}
+
+// newStdout 新建带Hook的标准输出
+func newStdout() *stdout {
+	s := &stdout{Writer: os.Stdout, Hook: newHook()}
 	return s
 }
 
