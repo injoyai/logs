@@ -149,6 +149,19 @@ func (this *Entity) WriteToTCPServer(port int, color ...bool) error {
 	return nil
 }
 
+// WriteToGTTPServer 写入HTTP服务器 ,color 是否传输颜色数据
+func (this *Entity) WriteToGTTPServer(method, url string, color ...bool) error {
+	writer, err := NewHTTPClient(method, url)
+	if err != nil {
+		return err
+	}
+	if len(color) > 0 && color[0] {
+		writer = NewWriteColor(writer)
+	}
+	this.AddWriter(writer)
+	return nil
+}
+
 // Sprintf 格式化输出
 func (this *Entity) Sprintf(format string, v ...interface{}) string {
 	return this.Sprint(fmt.Sprintf(format, v...))

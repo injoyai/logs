@@ -104,6 +104,20 @@ func WriteToTCPServer(port int, color ...bool) (err error) {
 	return nil
 }
 
+// WriteToHTTPServer 全部日志写入到HTTP服务端,color 是否传输颜色数据
+func WriteToHTTPServer(method, url string, color ...bool) (err error) {
+	var writer io.Writer
+	writer, err = NewHTTPClient(method, url)
+	if err != nil {
+		return err
+	}
+	if len(color) > 0 && color[0] {
+		writer = NewWriteColor(writer)
+	}
+	AddWriter(writer)
+	return nil
+}
+
 // SetCaller 日志位置层级
 func SetCaller(n int) {
 	m.Range(func(key, value interface{}) bool {

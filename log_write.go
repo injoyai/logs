@@ -2,12 +2,15 @@ package logs
 
 import (
 	"bufio"
+	"bytes"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -55,13 +58,9 @@ func (this *stdout) Input() {
 		go func(s *stdout) {
 			for {
 				var input string
-				log.Println("请输入筛选条件(暂时只支持正则):")
+				log.Println("请输入筛选条件(模糊搜索):")
 				fmt.Scanln(&input)
-				if s.Hook != nil {
-					if err := s.Hook.Regexp(input); err != nil {
-						fmt.Println("筛选条件错误:", err)
-					}
-				}
+				s.Hook.Like(input)
 			}
 		}(this)
 	})
@@ -176,7 +175,8 @@ func DialTCP(addr string, dealFunc func(p []byte)) error {
 
 type tcpServer struct {
 	listener net.Listener
-	conn     []net.Conn
+	conn     map[string]net.Conn
+	mu       sync.RWMutex
 }
 
 func (this *tcpServer) run() {
@@ -185,14 +185,36 @@ func (this *tcpServer) run() {
 		if err != nil {
 			return
 		}
-		this.conn = append(this.conn, c)
+		this.conn[c.RemoteAddr().String()] = c
 	}
 }
 
-func (this *tcpServer) Write(p []byte) (int, error) {
-	for _, v := range this.conn {
-		v.Write(p)
+func (this *tcpServer) getConn() map[string]net.Conn {
+	m := map[string]net.Conn{}
+	this.mu.RLock()
+	defer this.mu.RUnlock()
+	for i, v := range this.conn {
+		m[i] = v
 	}
+	return m
+}
+
+func (this *tcpServer) delConn(key ...string) {
+	this.mu.Lock()
+	for _, v := range key {
+		delete(this.conn, v)
+	}
+	this.mu.Unlock()
+}
+
+func (this *tcpServer) Write(p []byte) (int, error) {
+	errKey := []string{}
+	for i, v := range this.getConn() {
+		if _, err := v.Write(p); err != nil {
+			errKey = append(errKey, i)
+		}
+	}
+	this.delConn(errKey...)
 	return len(p), nil
 }
 
@@ -205,11 +227,42 @@ func NewTCPServer(port int) (io.Writer, error) {
 		return nil, err
 	}
 
-	writer := &tcpServer{listener: listener}
+	writer := &tcpServer{listener: listener, conn: make(map[string]net.Conn)}
 
 	go writer.run()
 
 	return writer, nil
+}
+
+type httpClient struct {
+	*http.Client
+	method string
+	url    string
+}
+
+func (this *httpClient) Write(p []byte) (int, error) {
+	req, err := http.NewRequest(this.method, this.url, bytes.NewBuffer(p))
+	if err != nil {
+		return 0, err
+	}
+	_, err = this.Client.Do(req)
+	return len(p), err
+}
+
+func NewHTTPClient(method, url string) (io.Writer, error) {
+	return &httpClient{
+		Client: &http.Client{
+			Transport: &http.Transport{
+				DisableKeepAlives: true,
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			},
+			Timeout: time.Second * 10,
+		},
+		method: method,
+		url:    url,
+	}, nil
 }
 
 //==============================File==============================
