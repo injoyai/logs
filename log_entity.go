@@ -7,6 +7,17 @@ import (
 	"os"
 )
 
+type Level int8
+
+const (
+	LevelAll Level = iota - 1
+	LevelTest
+	LevelInfo
+	LevelDebug
+	LevelWarn
+	LevelError
+)
+
 // NewEntity 默认写到控制台和消息总线
 func NewEntity(name string) *Entity {
 	data := &Entity{
@@ -31,7 +42,7 @@ type Entity struct {
 	ShowColor  bool            //显示颜色
 	Writer     []io.Writer     //输出
 	Formatter  IFormatter      //格式
-	Level      uint8           //日志等级,待实现
+	Level      Level           //日志等级,待实现
 }
 
 // SetFormatter 设置格式化函数
@@ -74,6 +85,11 @@ func (this *Entity) SetColor(c color.Attribute) *Entity {
 // SetShowColor 显示颜色
 func (this *Entity) SetShowColor(b ...bool) *Entity {
 	this.ShowColor = !(len(b) > 0 && !b[0])
+	return this
+}
+
+func (this *Entity) SetLevel(level Level) *Entity {
+	this.Level = level
 	return this
 }
 
@@ -179,17 +195,17 @@ func (this *Entity) Sprint(v ...interface{}) string {
 }
 
 // Writef 格式化写入
-func (this *Entity) Writef(format string, v ...interface{}) {
-	this.Write(fmt.Sprintf(format, v...))
+func (this *Entity) Writef(level Level, format string, v ...interface{}) {
+	this.Write(level, fmt.Sprintf(format, v...))
 }
 
 // Write 写入内容
-func (this *Entity) Write(s ...interface{}) {
+func (this *Entity) Write(level Level, s ...interface{}) {
 	msg := this.Sprint(s...)
 	for _, w := range this.Writer {
-		if w != nil {
+		if w != nil && level >= this.Level {
 			bytes := []byte(msg)
-			if val, ok := w.(interface{ Color() bool }); ok && val.Color() {
+			if val, ok := w.(interface{ Color() bool }); ok && val.Color() && this.ShowColor {
 				bytes = []byte(color.New(this.Color).Sprint(msg))
 			}
 			for i := 0; i < 3; i++ {

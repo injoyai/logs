@@ -3,6 +3,7 @@ package logs
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -58,7 +59,7 @@ func (this *stdout) Input() {
 		go func(s *stdout) {
 			for {
 				var input string
-				log.Println("请输入筛选条件(模糊搜索):")
+				//log.Println("请输入筛选条件(模糊搜索):")
 				fmt.Scanln(&input)
 				s.Hook.Like(input)
 			}
@@ -100,18 +101,11 @@ func newTrunk(cap uint) *trunk {
 // tcpClient tcp客户端
 type tcpClient struct {
 	net.Conn
+	ch *_chan
 }
 
 func (this *tcpClient) Write(p []byte) (int, error) {
-	n, err := this.Conn.Write(p)
-	if err != nil {
-		c, err := net.Dial("tcp", this.Conn.RemoteAddr().String())
-		if err == nil {
-			this.Conn = c
-			return this.Conn.Write(p)
-		}
-	}
-	return n, err
+	return len(p), this.ch.Try(p)
 }
 
 // NewTCPClient 推送至指定TCP服务器,断线重连
@@ -120,7 +114,18 @@ func NewTCPClient(addr string) (io.Writer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &tcpClient{Conn: c}, nil
+	t := &tcpClient{Conn: c, ch: newChan(context.Background(), 100)}
+	t.ch.handler = func(ctx context.Context, count int, data interface{}) {
+		p := data.([]byte)
+		_, err := t.Conn.Write(p)
+		if err != nil {
+			c, err := net.Dial("tcp", t.Conn.RemoteAddr().String())
+			if err == nil {
+				t.Conn = c
+			}
+		}
+	}
+	return t, nil
 }
 
 // DialTCP 监听tcp数据
@@ -177,6 +182,7 @@ type tcpServer struct {
 	listener net.Listener
 	conn     map[string]net.Conn
 	mu       sync.RWMutex
+	ch       *_chan
 }
 
 func (this *tcpServer) run() {
@@ -185,7 +191,9 @@ func (this *tcpServer) run() {
 		if err != nil {
 			return
 		}
+		this.mu.Lock()
 		this.conn[c.RemoteAddr().String()] = c
+		this.mu.Unlock()
 	}
 }
 
@@ -208,14 +216,7 @@ func (this *tcpServer) delConn(key ...string) {
 }
 
 func (this *tcpServer) Write(p []byte) (int, error) {
-	errKey := []string{}
-	for i, v := range this.getConn() {
-		if _, err := v.Write(p); err != nil {
-			errKey = append(errKey, i)
-		}
-	}
-	this.delConn(errKey...)
-	return len(p), nil
+	return len(p), this.ch.Try(p)
 }
 
 // NewTCPServer 推送至TCP所有连接的客户端
@@ -227,7 +228,22 @@ func NewTCPServer(port int) (io.Writer, error) {
 		return nil, err
 	}
 
-	writer := &tcpServer{listener: listener, conn: make(map[string]net.Conn)}
+	writer := &tcpServer{
+		listener: listener,
+		conn:     make(map[string]net.Conn),
+		ch:       newChan(context.Background(), 100),
+	}
+
+	writer.ch.handler = func(ctx context.Context, count int, data interface{}) {
+		p := data.([]byte)
+		errKey := []string(nil)
+		for i, v := range writer.getConn() {
+			if _, err := v.Write(p); err != nil {
+				errKey = append(errKey, i)
+			}
+		}
+		writer.delConn(errKey...)
+	}
 
 	go writer.run()
 
@@ -238,19 +254,15 @@ type httpClient struct {
 	*http.Client
 	method string
 	url    string
+	ch     *_chan
 }
 
 func (this *httpClient) Write(p []byte) (int, error) {
-	req, err := http.NewRequest(this.method, this.url, bytes.NewBuffer(p))
-	if err != nil {
-		return 0, err
-	}
-	_, err = this.Client.Do(req)
-	return len(p), err
+	return len(p), this.ch.Try(p)
 }
 
 func NewHTTPClient(method, url string) (io.Writer, error) {
-	return &httpClient{
+	w := &httpClient{
 		Client: &http.Client{
 			Transport: &http.Transport{
 				DisableKeepAlives: true,
@@ -262,7 +274,16 @@ func NewHTTPClient(method, url string) (io.Writer, error) {
 		},
 		method: method,
 		url:    url,
-	}, nil
+		ch:     newChan(context.Background(), 100),
+	}
+	w.ch.handler = func(ctx context.Context, count int, data interface{}) {
+		bs := data.([]byte)
+		req, err := http.NewRequest(w.method, w.url, bytes.NewBuffer(bs))
+		if err == nil {
+			w.Client.Do(req)
+		}
+	}
+	return w, nil
 }
 
 //==============================File==============================

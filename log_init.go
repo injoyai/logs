@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"io"
+	"os"
 	"sync"
 	"time"
 )
@@ -134,12 +135,30 @@ func SetShowColor(b ...bool) {
 	})
 }
 
+// SetLevel 设置日志等级
+func SetLevel(level Level) {
+	m.Range(func(key, value interface{}) bool {
+		value.(*Entity).SetLevel(level)
+		return true
+	})
+}
+
+// SetLevelWithAll 设置日志等级为全部
+func SetLevelWithAll() {
+	SetLevel(LevelAll)
+}
+
 // SetFormatter 设置输出格式
 func SetFormatter(f IFormatter) {
 	m.Range(func(key, value interface{}) bool {
 		value.(*Entity).SetFormatter(f)
 		return true
 	})
+}
+
+// SetFormatterWithDefault 设置输出格式为默认
+func SetFormatterWithDefault() {
+	SetFormatter(DefaultFormatter)
 }
 
 // SetSaveTime 设置保存时间,默认按天(即设置秒,用默认格式相当于1天)
@@ -152,78 +171,117 @@ func SetSaveTime(saveTime time.Duration) {
 // PrintErr 打印错误,有错误才打印
 func PrintErr(err error) bool {
 	if err != nil {
-		DefaultErr.Write(err.Error())
+		DefaultErr.Write(LevelError, err.Error())
+	}
+	return err != nil
+}
+
+// PanicErr 有错误的时候panic
+func PanicErr(err error) bool {
+	if err != nil {
+		DefaultErr.Write(LevelError, err.Error())
+		panic(err)
 	}
 	return err != nil
 }
 
 // Test 预设测试 蓝色
-//[测试] 2022/01/08 10:44:02 init_test.go:10:
+// [测试] 2022/01/08 10:44:02 init_test.go:10:
 func Test(s ...interface{}) {
-	DefaultTest.Write(s...)
+	DefaultTest.Write(LevelTest, s...)
 }
 
 // Testf 预设测试 蓝色
-//[测试] 2022/01/08 10:44:02 init_test.go:10:
+// [测试] 2022/01/08 10:44:02 init_test.go:10:
 func Testf(format string, s ...interface{}) {
-	DefaultTest.Write(fmt.Sprintf(format, s...))
+	DefaultTest.Write(LevelTest, fmt.Sprintf(format, s...))
 }
 
 // Warn 预设警告
-//[警告] 2022/01/08 10:44:02 init_test.go:10:
+// [警告] 2022/01/08 10:44:02 init_test.go:10:
 func Warn(s ...interface{}) {
-	DefaultWarn.Write(s...)
+	DefaultWarn.Write(LevelWarn, s...)
 }
 
 // Warnf 警告
 func Warnf(format string, s ...interface{}) {
-	DefaultWarn.Write(fmt.Sprintf(format, s...))
+	DefaultWarn.Write(LevelWarn, fmt.Sprintf(format, s...))
 }
 
 // Err 预设错误 红色 写入文件
-//[错误] 2022/01/08 10:44:02 init_test.go:10:
+// [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Err(s ...interface{}) {
-	DefaultErr.Write(s...)
+	DefaultErr.Write(LevelError, s...)
 }
 
 // Error 预设错误 红色 写入文件
-//[错误] 2022/01/08 10:44:02 init_test.go:10:
+// [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Error(s ...interface{}) {
-	DefaultErr.Write(s...)
+	DefaultErr.Write(LevelError, s...)
 }
 
 // Errorf 预设错误 红色 写入文件
-//[错误] 2022/01/08 10:44:02 init_test.go:10:
+// [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Errorf(format string, s ...interface{}) {
-	DefaultErr.Write(fmt.Sprintf(format, s...))
+	DefaultErr.Write(LevelError, fmt.Sprintf(format, s...))
 }
 
 // Errf 预设错误 红色 写入文件
-//[错误] 2022/01/08 10:44:02 init_test.go:10:
+// [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Errf(format string, s ...interface{}) {
-	DefaultErr.Write(fmt.Sprintf(format, s...))
+	DefaultErr.Write(LevelError, fmt.Sprintf(format, s...))
 }
 
 // Info 预设信息 青色
-//[信息] 2022/01/08 10:44:02 init_test.go:10:
+// [信息] 2022/01/08 10:44:02 init_test.go:10:
 func Info(s ...interface{}) {
-	DefaultInfo.Write(s...)
+	DefaultInfo.Write(LevelInfo, s...)
 }
 
 // Infof 预设信息 青色
-//[信息] 2022/01/08 10:44:02 init_test.go:10:
+// [信息] 2022/01/08 10:44:02 init_test.go:10:
 func Infof(format string, s ...interface{}) {
-	DefaultInfo.Write(fmt.Sprintf(format, s...))
+	DefaultInfo.Write(LevelInfo, fmt.Sprintf(format, s...))
 }
 
 // Debug 预设调试 黄色
-//[调试] 2022/01/08 10:44:02 init_test.go:10:
+// [调试] 2022/01/08 10:44:02 init_test.go:10:
 func Debug(s ...interface{}) {
-	DefaultDebug.Write(s...)
+	DefaultDebug.Write(LevelDebug, s...)
 }
 
 // Debugf 预设调试 黄色
 // [调试] 2022/01/08 10:44:02 init_test.go:10:
 func Debugf(format string, s ...interface{}) {
-	DefaultDebug.Write(fmt.Sprintf(format, s...))
+	DefaultDebug.Write(LevelDebug, fmt.Sprintf(format, s...))
+}
+
+// Panic 预设调试 红色
+// [错误] 2022/01/08 10:44:02 init_test.go:10:
+func Panic(s ...interface{}) {
+	msg := fmt.Sprint(s...)
+	DefaultErr.Write(LevelError, msg)
+	panic(msg)
+}
+
+// Panicf 预设调试 红色
+// [致命] 2022/01/08 10:44:02 init_test.go:10:
+func Panicf(format string, s ...interface{}) {
+	msg := fmt.Sprintf(format, s...)
+	DefaultErr.Write(LevelError, msg)
+	panic(msg)
+}
+
+// Fatal 预设调试 红色
+// [致命] 2022/01/08 10:44:02 init_test.go:10:
+func Fatal(s ...interface{}) {
+	DefaultErr.Write(LevelError, s...)
+	os.Exit(-127)
+}
+
+// Fatalf 预设调试 红色
+// [致命] 2022/01/08 10:44:02 init_test.go:10:
+func Fatalf(format string, s ...interface{}) {
+	DefaultErr.Write(LevelError, fmt.Sprintf(format, s...))
+	os.Exit(-127)
 }
