@@ -47,7 +47,11 @@ func main() {
 
 	//===================测试Panic和Fatal===================
 
-	<-time.After(time.Second * 5)
+	func() {
+		defer logs.Spend("总", "耗时")()
+		defer logs.Spend()()
+		<-time.After(time.Second * 5)
+	}()
 
 	testPanic()
 	logs.Fatal("Fatal")

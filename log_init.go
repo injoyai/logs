@@ -256,6 +256,13 @@ func Debugf(format string, s ...interface{}) {
 	DefaultDebug.Write(LevelDebug, fmt.Sprintf(format, s...))
 }
 
+func Spend(prefix ...interface{}) func() {
+	now := time.Now()
+	return func() {
+		DefaultDebug.Write(LevelDebug, fmt.Sprint(prefix...), time.Now().Sub(now))
+	}
+}
+
 // Panic 预设调试 红色
 // [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Panic(s ...interface{}) {
