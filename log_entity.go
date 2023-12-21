@@ -165,8 +165,8 @@ func (this *Entity) WriteToTCPServer(port int, color ...bool) error {
 	return nil
 }
 
-// WriteToGTTPServer 写入HTTP服务器 ,color 是否传输颜色数据
-func (this *Entity) WriteToGTTPServer(method, url string, color ...bool) error {
+// WriteToHTTPServer 写入HTTP服务器 ,color 是否传输颜色数据
+func (this *Entity) WriteToHTTPServer(method, url string, color ...bool) error {
 	writer, err := NewHTTPClient(method, url)
 	if err != nil {
 		return err
