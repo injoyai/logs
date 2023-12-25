@@ -7,15 +7,18 @@ import (
 	"os"
 )
 
-type Level int8
+type Level uint8
 
 const (
-	LevelAll Level = iota - 1
-	LevelTest
+	LevelAll Level = iota
+	LevelTrace
+	LevelWrite
+	LevelRead
 	LevelInfo
 	LevelDebug
 	LevelWarn
 	LevelError
+	LevelNone Level = 255
 )
 
 // NewEntity 默认写到控制台和消息总线
@@ -28,6 +31,7 @@ func NewEntity(name string) *Entity {
 		caller:    0,
 		Writer:    []io.Writer{Stdout, Trunk},
 		Formatter: DefaultFormatter,
+		Level:     LevelAll,
 	}
 	return data
 }

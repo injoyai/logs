@@ -19,11 +19,18 @@ type IFormatter interface {
 }
 
 // DefaultFormatter 默认格式化可修改
-var DefaultFormatter = new(formatter)
+var DefaultFormatter = &formatter{flag: log.Ldate | log.Ltime | log.Lshortfile}
 
 // 默认输出
 type formatter struct {
+	flag      int //当formatter为nil时使用
 	formatter func(e *Entity, msg string) string
+}
+
+// SetFlag 设置flag
+func (this *formatter) SetFlag(flag int) *formatter {
+	this.flag = flag
+	return this
 }
 
 // SetFormatter 设置数据格式函数
@@ -50,6 +57,6 @@ func (this *formatter) Formatter(e *Entity, msg string) string {
 	if len(e.Name) > 0 {
 		prefix = "[" + e.Name + "]"
 	}
-	_ = log.New(writer, prefix, log.Ldate|log.Ltime|log.Lshortfile).Output(e.GetCaller(), msg)
+	_ = log.New(writer, prefix, this.flag).Output(e.GetCaller(), msg)
 	return writer.String()
 }

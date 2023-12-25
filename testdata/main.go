@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/injoyai/logs"
+	"log"
 	"time"
 )
 
@@ -18,6 +19,9 @@ func main() {
 
 	//===================测试Color===================
 
+	logs.Trace("trace")
+	logs.Write("write")
+	logs.Read("read")
 	logs.Debug("Debug")
 	logs.Err("Err")
 	logs.Warn("Warn")
@@ -37,6 +41,13 @@ func main() {
 	logs.Info("Level Info After")
 	logs.Err("Level Err After")
 	logs.SetLevel(logs.LevelAll)
+
+	//===================测试Flag===================
+
+	logs.DefaultFormatter.SetFlag(log.Ltime)
+	logs.Read("read")
+	logs.Debug("debug")
+	logs.DefaultFormatter.SetFlag(log.Ldate | log.Ltime | log.Lshortfile)
 
 	//===================测试Formatter===================
 
