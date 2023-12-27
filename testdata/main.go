@@ -17,6 +17,10 @@ func main() {
 	logs.AddWriter(w, w2)
 	<-time.After(time.Second * 5)
 
+	logs.Stdout.EnableFilter()
+
+	<-time.After(time.Second * 5)
+
 	//===================测试Color===================
 
 	logs.Trace("trace")
