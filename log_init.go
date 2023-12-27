@@ -33,9 +33,6 @@ var (
 	// Trunk 消息总线,公共Writer,
 	Trunk = newTrunk(1000)
 
-	// Hook 计划支持控制台筛选,tcp筛选...
-	Hook = newHook()
-
 	// Stdout 系统标准输出, NewWriteColor 支持颜色输出
 	Stdout = newStdout()
 )

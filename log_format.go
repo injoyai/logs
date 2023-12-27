@@ -60,3 +60,20 @@ func (this *formatter) Formatter(e *Entity, msg string) string {
 	_ = log.New(writer, prefix, this.flag).Output(e.GetCaller(), msg)
 	return writer.String()
 }
+
+func TimeFormatter(e *Entity, msg string) string {
+	writer := bytes.NewBuffer(nil)
+	var tag string
+	for i, v := range e.Tag {
+		tag += "[" + v + "]"
+		if i == len(e.Tag)-1 {
+			tag += " "
+		}
+	}
+	msg = tag + msg
+	if len(e.Name) > 0 {
+		msg = "[" + e.Name + "]" + msg
+	}
+	_ = log.New(writer, "", log.Ltime).Output(e.GetCaller(), msg)
+	return writer.String()
+}
