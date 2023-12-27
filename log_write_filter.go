@@ -32,7 +32,7 @@ func (this *Filter) SetLike(like string) {
 }
 
 func (this *Filter) Valid(p []byte) bool {
-	return this.reg == nil || this.reg.Match(p)
+	return !this.enable || this.reg == nil || this.reg.Match(p)
 }
 
 func (this *Filter) Write(p []byte) (int, error) {
