@@ -198,25 +198,35 @@ func (this *Entity) Sprint(v ...interface{}) string {
 	return this.Formatter.Formatter(this, fmt.Sprint(v...))
 }
 
-// Writef 格式化写入
-func (this *Entity) Writef(level Level, format string, v ...interface{}) {
-	this.Write(level, fmt.Sprintf(format, v...))
+// Printf 格式化写入
+func (this *Entity) Printf(level Level, format string, v ...interface{}) (int, error) {
+	return this.Print(level, fmt.Sprintf(format, v...))
 }
 
-// Write 写入内容
-func (this *Entity) Write(level Level, s ...interface{}) {
-	msg := this.Sprint(s...)
+// Print 写入内容
+func (this *Entity) Print(level Level, s ...interface{}) (int, error) {
+	if level >= this.Level {
+		msg := []byte(this.Sprint(s...))
+		return this.Write(msg)
+	}
+	return 0, nil
+}
+
+// Write 实现io.Writer
+func (this *Entity) Write(p []byte) (n int, err error) {
 	for _, w := range this.Writer {
-		if w != nil && level >= this.Level {
-			bytes := []byte(msg)
-			if val, ok := w.(interface{ Color() bool }); ok && val.Color() && this.ShowColor {
-				bytes = []byte(color.New(this.Color).Sprint(msg))
-			}
-			for i := 0; i < 3; i++ {
-				if _, err := w.Write(bytes); err == nil {
-					break
-				}
+		if w == nil {
+			return
+		}
+		if val, ok := w.(interface{ Color() bool }); ok && val.Color() && this.ShowColor {
+			p = []byte(color.New(this.Color).Sprint(string(p)))
+		}
+		for i := 0; i < 3; i++ {
+			n, err = w.Write(p)
+			if err == nil {
+				break
 			}
 		}
 	}
+	return
 }
