@@ -58,7 +58,12 @@ func (this *formatter) Formatter(e *Entity, msg string) string {
 		prefix = "[" + e.Name + "]"
 	}
 	_ = log.New(writer, prefix, this.flag).Output(e.GetCaller(), msg)
-	return writer.String()
+	//去除最后一个换行
+	msg = writer.String()
+	if len(msg) > 0 && msg[len(msg)-1] == '\n' {
+		msg = msg[:len(msg)-1]
+	}
+	return msg
 }
 
 func TimeFormatter(e *Entity, msg string) string {
@@ -75,5 +80,9 @@ func TimeFormatter(e *Entity, msg string) string {
 		msg = "[" + e.Name + "]" + msg
 	}
 	_ = log.New(writer, "", log.Ltime).Output(e.GetCaller(), msg)
-	return writer.String()
+	msg = writer.String()
+	if len(msg) > 0 && msg[len(msg)-1] == '\n' {
+		msg = msg[:len(msg)-1]
+	}
+	return msg
 }

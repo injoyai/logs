@@ -8,6 +8,10 @@ import (
 
 func main() {
 
+	logs.Debugf("123")
+	logs.Debug("456")
+	logs.Debug("789")
+
 	//===================测试TCP Client===================
 
 	w, err := logs.NewTCPClient(":10089")
@@ -81,6 +85,6 @@ func testPanic() {
 
 type _format struct{}
 
-func (_ _format) Formatter(e *logs.Entity, msg string) string {
-	return "[Format] " + msg + "\n"
+func (_format) Formatter(e *logs.Entity, msg string) string {
+	return "[Format] " + msg
 }

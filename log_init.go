@@ -172,7 +172,7 @@ func SetSaveTime(saveTime time.Duration) {
 // PrintErr 打印错误,有错误才打印
 func PrintErr(err error) bool {
 	if err != nil {
-		DefaultErr.Print(LevelError, err.Error())
+		DefaultErr.Println(LevelError, err.Error())
 	}
 	return err != nil
 }
@@ -180,7 +180,7 @@ func PrintErr(err error) bool {
 // PanicErr 有错误的时候panic
 func PanicErr(err error) bool {
 	if err != nil {
-		DefaultErr.Print(LevelError, err.Error())
+		DefaultErr.Println(LevelError, err.Error())
 		panic(err)
 	}
 	return err != nil
@@ -189,7 +189,7 @@ func PanicErr(err error) bool {
 // Trace 预设追溯 蓝色
 // [追溯] 2022/01/08 10:44:02 init_test.go:10:
 func Trace(s ...interface{}) (int, error) {
-	return DefaultTrace.Print(LevelTrace, s...)
+	return DefaultTrace.Println(LevelTrace, s...)
 }
 
 // Tracef 预设细微 蓝色
@@ -201,7 +201,7 @@ func Tracef(format string, s ...interface{}) (int, error) {
 // Read 预设读取 蓝色
 // [读取] 2022/01/08 10:44:02 init_test.go:10:
 func Read(s ...interface{}) (int, error) {
-	return DefaultRead.Print(LevelRead, s...)
+	return DefaultRead.Println(LevelRead, s...)
 }
 
 // Readf 预设读取 蓝色
@@ -213,7 +213,7 @@ func Readf(format string, s ...interface{}) (int, error) {
 // Write 预设写入 蓝色
 // [写入] 2022/01/08 10:44:02 init_test.go:10:
 func Write(s ...interface{}) (int, error) {
-	return DefaultWrite.Print(LevelWrite, s...)
+	return DefaultWrite.Println(LevelWrite, s...)
 }
 
 // Writef 预设写入 蓝色
@@ -225,7 +225,7 @@ func Writef(format string, s ...interface{}) (int, error) {
 // Info 预设信息 青色
 // [信息] 2022/01/08 10:44:02 init_test.go:10:
 func Info(s ...interface{}) (int, error) {
-	return DefaultInfo.Print(LevelInfo, s...)
+	return DefaultInfo.Println(LevelInfo, s...)
 }
 
 // Infof 预设信息 青色
@@ -237,7 +237,7 @@ func Infof(format string, s ...interface{}) (int, error) {
 // Debug 预设调试 黄色
 // [调试] 2022/01/08 10:44:02 init_test.go:10:
 func Debug(s ...interface{}) (int, error) {
-	return DefaultDebug.Print(LevelDebug, s...)
+	return DefaultDebug.Println(LevelDebug, s...)
 }
 
 // Debugf 预设调试 黄色
@@ -249,7 +249,7 @@ func Debugf(format string, s ...interface{}) (int, error) {
 // Warn 预设警告
 // [警告] 2022/01/08 10:44:02 init_test.go:10:
 func Warn(s ...interface{}) (int, error) {
-	return DefaultWarn.Print(LevelWarn, s...)
+	return DefaultWarn.Println(LevelWarn, s...)
 }
 
 // Warnf 警告
@@ -260,13 +260,13 @@ func Warnf(format string, s ...interface{}) (int, error) {
 // Err 预设错误 红色 写入文件
 // [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Err(s ...interface{}) (int, error) {
-	return DefaultErr.Print(LevelError, s...)
+	return DefaultErr.Println(LevelError, s...)
 }
 
 // Error 预设错误 红色 写入文件
 // [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Error(s ...interface{}) (int, error) {
-	return DefaultErr.Print(LevelError, s...)
+	return DefaultErr.Println(LevelError, s...)
 }
 
 // Errorf 预设错误 红色 写入文件
@@ -284,7 +284,7 @@ func Errf(format string, s ...interface{}) (int, error) {
 func Spend(prefix ...interface{}) func() {
 	now := time.Now()
 	return func() {
-		DefaultDebug.Print(LevelDebug, fmt.Sprint(prefix...), time.Now().Sub(now))
+		DefaultDebug.Println(LevelDebug, fmt.Sprint(prefix...), time.Now().Sub(now))
 	}
 }
 
@@ -292,7 +292,7 @@ func Spend(prefix ...interface{}) func() {
 // [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Panic(s ...interface{}) (int, error) {
 	msg := fmt.Sprint(s...)
-	n, err := DefaultErr.Print(LevelError, msg)
+	n, err := DefaultErr.Println(LevelError, msg)
 	panic(msg)
 	return n, err
 }
@@ -301,7 +301,7 @@ func Panic(s ...interface{}) (int, error) {
 // [致命] 2022/01/08 10:44:02 init_test.go:10:
 func Panicf(format string, s ...interface{}) (int, error) {
 	msg := fmt.Sprintf(format, s...)
-	n, err := DefaultErr.Print(LevelError, msg)
+	n, err := DefaultErr.Println(LevelError, msg)
 	panic(msg)
 	return n, err
 }
@@ -310,7 +310,7 @@ func Panicf(format string, s ...interface{}) (int, error) {
 // [致命] 2022/01/08 10:44:02 init_test.go:10:
 func Fatal(s ...interface{}) (int, error) {
 	defer os.Exit(-127)
-	return DefaultErr.Print(LevelError, s...)
+	return DefaultErr.Println(LevelError, s...)
 }
 
 // Fatalf 预设调试 红色

@@ -198,15 +198,28 @@ func (this *Entity) Sprint(v ...interface{}) string {
 	return this.Formatter.Formatter(this, fmt.Sprint(v...))
 }
 
+func (this *Entity) Sprintln(v ...interface{}) string {
+	return this.Sprint(fmt.Sprint(v...)) + "\n"
+}
+
 // Printf 格式化写入
 func (this *Entity) Printf(level Level, format string, v ...interface{}) (int, error) {
 	return this.Print(level, fmt.Sprintf(format, v...))
 }
 
 // Print 写入内容
-func (this *Entity) Print(level Level, s ...interface{}) (int, error) {
+func (this *Entity) Print(level Level, v ...interface{}) (int, error) {
 	if level >= this.Level {
-		msg := []byte(this.Sprint(s...))
+		msg := []byte(this.Sprint(v...))
+		return this.Write(msg)
+	}
+	return 0, nil
+}
+
+// Println 写入内容,换行
+func (this *Entity) Println(level Level, v ...interface{}) (int, error) {
+	if level >= this.Level {
+		msg := []byte(this.Sprintln(v...))
 		return this.Write(msg)
 	}
 	return 0, nil
