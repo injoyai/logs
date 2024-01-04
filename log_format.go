@@ -66,6 +66,12 @@ func (this *formatter) Formatter(e *Entity, msg string) string {
 	return msg
 }
 
+type FormatFunc func(e *Entity, msg string) string
+
+func (thiS FormatFunc) Formatter(e *Entity, msg string) string {
+	return thiS(e, msg)
+}
+
 func TimeFormatter(e *Entity, msg string) string {
 	writer := bytes.NewBuffer(nil)
 	var tag string
@@ -77,7 +83,7 @@ func TimeFormatter(e *Entity, msg string) string {
 	}
 	msg = tag + msg
 	if len(e.Name) > 0 {
-		msg = "[" + e.Name + "]" + msg
+		msg = "[" + e.Name + "] " + msg
 	}
 	_ = log.New(writer, "", log.Ltime).Output(e.GetCaller(), msg)
 	msg = writer.String()
