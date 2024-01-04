@@ -32,6 +32,7 @@ func NewEntity(name string) *Entity {
 		Writer:    []io.Writer{Stdout, Trunk},
 		Formatter: DefaultFormatter,
 		Level:     LevelAll,
+		SelfLevel: LevelNone,
 	}
 	return data
 }
@@ -46,7 +47,8 @@ type Entity struct {
 	ShowColor  bool            //显示颜色
 	Writer     []io.Writer     //输出
 	Formatter  IFormatter      //格式
-	Level      Level           //日志等级,待实现
+	Level      Level           //日志等级
+	SelfLevel  Level           //自身日志等级
 }
 
 // SetFormatter 设置格式化函数
@@ -94,6 +96,11 @@ func (this *Entity) SetShowColor(b ...bool) *Entity {
 
 func (this *Entity) SetLevel(level Level) *Entity {
 	this.Level = level
+	return this
+}
+
+func (this *Entity) SetSelfLevel(level Level) *Entity {
+	this.SelfLevel = level
 	return this
 }
 
@@ -184,7 +191,13 @@ func (this *Entity) WriteToHTTPServer(method, url string, color ...bool) error {
 
 // Sprintf 格式化输出
 func (this *Entity) Sprintf(format string, v ...interface{}) string {
-	return this.Sprint(fmt.Sprintf(format, v...))
+	if this.Formatter == nil {
+		this.Formatter = DefaultFormatter
+	}
+	if this.Formatter == nil {
+		this.Formatter = new(formatter)
+	}
+	return this.Formatter.Formatter(this, fmt.Sprintf(format, v...))
 }
 
 // Sprint 格式化输出
@@ -199,17 +212,27 @@ func (this *Entity) Sprint(v ...interface{}) string {
 }
 
 func (this *Entity) Sprintln(v ...interface{}) string {
-	return this.Sprint(fmt.Sprint(v...)) + "\n"
+	if this.Formatter == nil {
+		this.Formatter = DefaultFormatter
+	}
+	if this.Formatter == nil {
+		this.Formatter = new(formatter)
+	}
+	return this.Formatter.Formatter(this, fmt.Sprint(v...)) + "\n"
 }
 
 // Printf 格式化写入
-func (this *Entity) Printf(level Level, format string, v ...interface{}) (int, error) {
-	return this.Print(level, fmt.Sprintf(format, v...))
+func (this *Entity) Printf(format string, v ...interface{}) (int, error) {
+	if this.SelfLevel >= this.Level {
+		msg := []byte(this.Sprintf(format, v...))
+		return this.Write(msg)
+	}
+	return 0, nil
 }
 
 // Print 写入内容
-func (this *Entity) Print(level Level, v ...interface{}) (int, error) {
-	if level >= this.Level {
+func (this *Entity) Print(v ...interface{}) (int, error) {
+	if this.SelfLevel >= this.Level {
 		msg := []byte(this.Sprint(v...))
 		return this.Write(msg)
 	}
@@ -217,8 +240,8 @@ func (this *Entity) Print(level Level, v ...interface{}) (int, error) {
 }
 
 // Println 写入内容,换行
-func (this *Entity) Println(level Level, v ...interface{}) (int, error) {
-	if level >= this.Level {
+func (this *Entity) Println(v ...interface{}) (int, error) {
+	if this.SelfLevel >= this.Level {
 		msg := []byte(this.Sprintln(v...))
 		return this.Write(msg)
 	}

@@ -22,13 +22,13 @@ const (
 
 var (
 	m            = sync.Map{}
-	DefaultTrace = NewEntity("追溯").setCaller(1).SetColor(color.FgGreen)
-	DefaultWrite = NewEntity("写入").setCaller(1).SetColor(color.FgBlue)
-	DefaultRead  = NewEntity("读取").setCaller(1).SetColor(color.FgBlue)
-	DefaultInfo  = NewEntity("信息").setCaller(1).SetColor(color.FgCyan)
-	DefaultDebug = NewEntity("调试").setCaller(1).SetColor(color.FgYellow)
-	DefaultWarn  = NewEntity("警告").setCaller(1).SetColor(color.FgMagenta)
-	DefaultErr   = NewEntity("错误").setCaller(1).SetColor(color.FgRed).WriteToFile(DefaultDir, DefaultLayout)
+	DefaultTrace = NewEntity("追溯").SetSelfLevel(LevelTrace).setCaller(1).SetColor(color.FgGreen)
+	DefaultWrite = NewEntity("写入").SetSelfLevel(LevelWrite).setCaller(1).SetColor(color.FgBlue)
+	DefaultRead  = NewEntity("读取").SetSelfLevel(LevelRead).setCaller(1).SetColor(color.FgBlue)
+	DefaultInfo  = NewEntity("信息").SetSelfLevel(LevelInfo).setCaller(1).SetColor(color.FgCyan)
+	DefaultDebug = NewEntity("调试").SetSelfLevel(LevelDebug).setCaller(1).SetColor(color.FgYellow)
+	DefaultWarn  = NewEntity("警告").SetSelfLevel(LevelWarn).setCaller(1).SetColor(color.FgMagenta)
+	DefaultErr   = NewEntity("错误").SetSelfLevel(LevelError).setCaller(1).SetColor(color.FgRed).WriteToFile(DefaultDir, DefaultLayout)
 
 	// Trunk 消息总线,公共Writer,
 	Trunk = newTrunk(1000)
@@ -172,7 +172,7 @@ func SetSaveTime(saveTime time.Duration) {
 // PrintErr 打印错误,有错误才打印
 func PrintErr(err error) bool {
 	if err != nil {
-		DefaultErr.Println(LevelError, err.Error())
+		DefaultErr.Println(err.Error())
 	}
 	return err != nil
 }
@@ -180,7 +180,7 @@ func PrintErr(err error) bool {
 // PanicErr 有错误的时候panic
 func PanicErr(err error) bool {
 	if err != nil {
-		DefaultErr.Println(LevelError, err.Error())
+		DefaultErr.Println(err.Error())
 		panic(err)
 	}
 	return err != nil
@@ -189,102 +189,102 @@ func PanicErr(err error) bool {
 // Trace 预设追溯 蓝色
 // [追溯] 2022/01/08 10:44:02 init_test.go:10:
 func Trace(s ...interface{}) (int, error) {
-	return DefaultTrace.Println(LevelTrace, s...)
+	return DefaultTrace.Println(s...)
 }
 
 // Tracef 预设细微 蓝色
 // [追溯] 2022/01/08 10:44:02 init_test.go:10:
 func Tracef(format string, s ...interface{}) (int, error) {
-	return DefaultTrace.Printf(LevelTrace, format, s...)
+	return DefaultTrace.Printf(format, s...)
 }
 
 // Read 预设读取 蓝色
 // [读取] 2022/01/08 10:44:02 init_test.go:10:
 func Read(s ...interface{}) (int, error) {
-	return DefaultRead.Println(LevelRead, s...)
+	return DefaultRead.Println(s...)
 }
 
 // Readf 预设读取 蓝色
 // [读取] 2022/01/08 10:44:02 init_test.go:10:
 func Readf(format string, s ...interface{}) (int, error) {
-	return DefaultRead.Printf(LevelRead, format, s...)
+	return DefaultRead.Printf(format, s...)
 }
 
 // Write 预设写入 蓝色
 // [写入] 2022/01/08 10:44:02 init_test.go:10:
 func Write(s ...interface{}) (int, error) {
-	return DefaultWrite.Println(LevelWrite, s...)
+	return DefaultWrite.Println(s...)
 }
 
 // Writef 预设写入 蓝色
 // [写入] 2022/01/08 10:44:02 init_test.go:10:
 func Writef(format string, s ...interface{}) (int, error) {
-	return DefaultWrite.Printf(LevelWrite, format, s...)
+	return DefaultWrite.Printf(format, s...)
 }
 
 // Info 预设信息 青色
 // [信息] 2022/01/08 10:44:02 init_test.go:10:
 func Info(s ...interface{}) (int, error) {
-	return DefaultInfo.Println(LevelInfo, s...)
+	return DefaultInfo.Println(s...)
 }
 
 // Infof 预设信息 青色
 // [信息] 2022/01/08 10:44:02 init_test.go:10:
 func Infof(format string, s ...interface{}) (int, error) {
-	return DefaultInfo.Printf(LevelInfo, format, s...)
+	return DefaultInfo.Printf(format, s...)
 }
 
 // Debug 预设调试 黄色
 // [调试] 2022/01/08 10:44:02 init_test.go:10:
 func Debug(s ...interface{}) (int, error) {
-	return DefaultDebug.Println(LevelDebug, s...)
+	return DefaultDebug.Println(s...)
 }
 
 // Debugf 预设调试 黄色
 // [调试] 2022/01/08 10:44:02 init_test.go:10:
 func Debugf(format string, s ...interface{}) (int, error) {
-	return DefaultDebug.Printf(LevelDebug, format, s...)
+	return DefaultDebug.Printf(format, s...)
 }
 
 // Warn 预设警告
 // [警告] 2022/01/08 10:44:02 init_test.go:10:
 func Warn(s ...interface{}) (int, error) {
-	return DefaultWarn.Println(LevelWarn, s...)
+	return DefaultWarn.Println(s...)
 }
 
 // Warnf 警告
 func Warnf(format string, s ...interface{}) (int, error) {
-	return DefaultWarn.Printf(LevelWarn, format, s...)
+	return DefaultWarn.Printf(format, s...)
 }
 
 // Err 预设错误 红色 写入文件
 // [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Err(s ...interface{}) (int, error) {
-	return DefaultErr.Println(LevelError, s...)
+	return DefaultErr.Println(s...)
 }
 
 // Error 预设错误 红色 写入文件
 // [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Error(s ...interface{}) (int, error) {
-	return DefaultErr.Println(LevelError, s...)
+	return DefaultErr.Println(s...)
 }
 
 // Errorf 预设错误 红色 写入文件
 // [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Errorf(format string, s ...interface{}) (int, error) {
-	return DefaultErr.Printf(LevelError, format, s...)
+	return DefaultErr.Printf(format, s...)
 }
 
 // Errf 预设错误 红色 写入文件
 // [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Errf(format string, s ...interface{}) (int, error) {
-	return DefaultErr.Printf(LevelError, format, s...)
+	return DefaultErr.Printf(format, s...)
 }
 
 func Spend(prefix ...interface{}) func() {
 	now := time.Now()
 	return func() {
-		DefaultDebug.Println(LevelDebug, fmt.Sprint(prefix...), time.Now().Sub(now))
+		DefaultDebug.Println(fmt.Sprint(prefix...), time.Now().Sub(now))
 	}
 }
 
@@ -292,7 +292,7 @@ func Spend(prefix ...interface{}) func() {
 // [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Panic(s ...interface{}) (int, error) {
 	msg := fmt.Sprint(s...)
-	n, err := DefaultErr.Println(LevelError, msg)
+	n, err := DefaultErr.Println(msg)
 	panic(msg)
 	return n, err
 }
@@ -301,7 +301,7 @@ func Panic(s ...interface{}) (int, error) {
 // [致命] 2022/01/08 10:44:02 init_test.go:10:
 func Panicf(format string, s ...interface{}) (int, error) {
 	msg := fmt.Sprintf(format, s...)
-	n, err := DefaultErr.Println(LevelError, msg)
+	n, err := DefaultErr.Println(msg)
 	panic(msg)
 	return n, err
 }
@@ -310,12 +310,12 @@ func Panicf(format string, s ...interface{}) (int, error) {
 // [致命] 2022/01/08 10:44:02 init_test.go:10:
 func Fatal(s ...interface{}) (int, error) {
 	defer os.Exit(-127)
-	return DefaultErr.Println(LevelError, s...)
+	return DefaultErr.Println(s...)
 }
 
 // Fatalf 预设调试 红色
 // [致命] 2022/01/08 10:44:02 init_test.go:10:
 func Fatalf(format string, s ...interface{}) (int, error) {
 	defer os.Exit(-127)
-	return DefaultErr.Printf(LevelError, format, s...)
+	return DefaultErr.Printf(format, s...)
 }

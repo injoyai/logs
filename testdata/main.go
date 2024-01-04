@@ -11,6 +11,9 @@ func main() {
 	logs.Debugf("123")
 	logs.Debug("456")
 	logs.Debug("789")
+	logs.DefaultDebug.Write([]byte("123456"))
+	logs.DefaultDebug.Println()
+	logs.New("测试").Println(666)
 
 	//===================测试TCP Client===================
 
