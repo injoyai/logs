@@ -218,7 +218,7 @@ func (this *Entity) Sprintln(v ...interface{}) string {
 	if this.Formatter == nil {
 		this.Formatter = new(formatter)
 	}
-	return this.Formatter.Formatter(this, fmt.Sprint(v...)) + "\n"
+	return this.Formatter.Formatter(this, fmt.Sprintln(v...))
 }
 
 // Printf 格式化写入

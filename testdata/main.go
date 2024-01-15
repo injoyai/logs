@@ -8,15 +8,19 @@ import (
 
 func main() {
 
-	logs.Debugf("123")
+	logs.Info("测试xxln,xxf,write")
+	logs.Debugf("不换行")
+	logs.Debugf("换行\n")
+	logs.Debugf("换行*2\n\n")
 	logs.Debug("456")
 	logs.Debug("789")
-	logs.DefaultDebug.Write([]byte("123456"))
+	logs.DefaultDebug.Write([]byte("123456\n"))
 	logs.DefaultDebug.Println()
 	logs.New("测试").Println(666)
 
 	//===================测试TCP Client===================
 
+	logs.Info("测试TCP Client")
 	w, err := logs.NewTCPClient(":10089")
 	logs.Err(err)
 	w2, err := logs.NewTCPServer(10086)
@@ -30,6 +34,7 @@ func main() {
 
 	//===================测试Color===================
 
+	logs.Info("测试Color")
 	logs.Trace("trace")
 	logs.Write("write")
 	logs.Read("read")
@@ -44,6 +49,7 @@ func main() {
 
 	//===================测试Level===================
 
+	logs.Info("测试Level")
 	logs.Debug("Level Debug Before")
 	logs.Info("Level Info Before")
 	logs.Err("Level Err Before")
@@ -55,6 +61,7 @@ func main() {
 
 	//===================测试Flag===================
 
+	logs.Info("测试Flag")
 	logs.DefaultFormatter.SetFlag(log.Ltime)
 	logs.Read("read")
 	logs.Debug("debug")
@@ -62,16 +69,24 @@ func main() {
 
 	//===================测试Formatter===================
 
+	logs.Info("测试Formatter")
 	logs.SetFormatter(new(_format))
 	logs.Debug("Format Debug")
 	logs.Info("Format Info")
+	logs.Err("Format Err")
+	logs.SetFormatterWithTime()
+	logs.Debug("Format Debug")
+	logs.Info("Format Info")
+	logs.Err("Format Err")
 	logs.SetFormatter(logs.DefaultFormatter)
 
 	//===================测试Panic和Fatal===================
 
+	logs.Info("测试Panic和Fatal")
 	func() {
 		defer logs.Spend("总", "耗时")()
 		defer logs.Spend()()
+
 		<-time.After(time.Second * 5)
 	}()
 

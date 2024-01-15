@@ -162,6 +162,10 @@ func SetFormatterWithDefault() {
 	SetFormatter(DefaultFormatter)
 }
 
+func SetFormatterWithTime() {
+	SetFormatter(TimeFormatter)
+}
+
 // SetSaveTime 设置保存时间,默认按天(即设置秒,用默认格式相当于1天)
 func SetSaveTime(saveTime time.Duration) {
 	DefaultRemoveFile.SetSaveTime(saveTime)
@@ -284,7 +288,7 @@ func Errf(format string, s ...interface{}) (int, error) {
 func Spend(prefix ...interface{}) func() {
 	now := time.Now()
 	return func() {
-		DefaultDebug.Println(fmt.Sprint(prefix...), time.Now().Sub(now))
+		DefaultDebug.Println(fmt.Sprint(prefix...) + time.Now().Sub(now).String())
 	}
 }
 

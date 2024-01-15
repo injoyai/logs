@@ -57,10 +57,12 @@ func (this *formatter) Formatter(e *Entity, msg string) string {
 	if len(e.Name) > 0 {
 		prefix = "[" + e.Name + "]"
 	}
+
+	hasLn := len(msg) > 0 && msg[len(msg)-1] == '\n'
 	_ = log.New(writer, prefix, this.flag).Output(e.GetCaller(), msg)
-	//去除最后一个换行
 	msg = writer.String()
-	if len(msg) > 0 && msg[len(msg)-1] == '\n' {
+	if len(msg) > 0 && msg[len(msg)-1] == '\n' && !hasLn {
+		//去除最后一个换行,,如果没有\n,log会自动添加一个\n
 		msg = msg[:len(msg)-1]
 	}
 	return msg
@@ -72,7 +74,11 @@ func (thiS FormatFunc) Formatter(e *Entity, msg string) string {
 	return thiS(e, msg)
 }
 
-func TimeFormatter(e *Entity, msg string) string {
+var (
+	TimeFormatter FormatFunc = timeFormatter
+)
+
+func timeFormatter(e *Entity, msg string) string {
 	writer := bytes.NewBuffer(nil)
 	var tag string
 	for i, v := range e.Tag {
@@ -85,9 +91,11 @@ func TimeFormatter(e *Entity, msg string) string {
 	if len(e.Name) > 0 {
 		msg = "[" + e.Name + "] " + msg
 	}
+
+	hasLn := len(msg) > 0 && msg[len(msg)-1] == '\n'
 	_ = log.New(writer, "", log.Ltime).Output(e.GetCaller(), msg)
 	msg = writer.String()
-	if len(msg) > 0 && msg[len(msg)-1] == '\n' {
+	if len(msg) > 0 && msg[len(msg)-1] == '\n' && !hasLn {
 		msg = msg[:len(msg)-1]
 	}
 	return msg
