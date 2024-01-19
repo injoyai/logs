@@ -12,10 +12,10 @@ type Level uint8
 const (
 	LevelAll Level = iota
 	LevelTrace
+	LevelDebug
 	LevelWrite
 	LevelRead
 	LevelInfo
-	LevelDebug
 	LevelWarn
 	LevelError
 	LevelNone Level = 255

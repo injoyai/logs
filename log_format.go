@@ -18,8 +18,12 @@ type IFormatter interface {
 	Formatter(e *Entity, msg string) string
 }
 
-// DefaultFormatter 默认格式化可修改
-var DefaultFormatter = &formatter{flag: log.Ldate | log.Ltime | log.Lshortfile}
+var (
+	// DefaultFormatter 默认格式化可修改
+	DefaultFormatter = &formatter{flag: log.Ldate | log.Ltime | log.Lshortfile}
+
+	TimeFormatter FormatFunc = timeFormatter
+)
 
 // 默认输出
 type formatter struct {
@@ -73,10 +77,6 @@ type FormatFunc func(e *Entity, msg string) string
 func (thiS FormatFunc) Formatter(e *Entity, msg string) string {
 	return thiS(e, msg)
 }
-
-var (
-	TimeFormatter FormatFunc = timeFormatter
-)
 
 func timeFormatter(e *Entity, msg string) string {
 	writer := bytes.NewBuffer(nil)
