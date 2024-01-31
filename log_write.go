@@ -1,15 +1,10 @@
 package logs
 
 import (
-	"bytes"
-	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"sync"
-	"time"
 )
 
 /*
@@ -64,42 +59,4 @@ func (this *stdout) EnableFilter() {
 func newStdout() *stdout {
 	s := &stdout{Writer: os.Stdout, Filter: NewFilter(nil)}
 	return s
-}
-
-//==============================WriteHTTP==============================
-
-type httpClient struct {
-	*http.Client
-	method string
-	url    string
-	ch     *_chan
-}
-
-func (this *httpClient) Write(p []byte) (int, error) {
-	return len(p), this.ch.Try(p)
-}
-
-func NewHTTPClient(method, url string) (io.Writer, error) {
-	w := &httpClient{
-		Client: &http.Client{
-			Transport: &http.Transport{
-				DisableKeepAlives: true,
-				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true,
-				},
-			},
-			Timeout: time.Second * 10,
-		},
-		method: method,
-		url:    url,
-		ch:     newChan(context.Background(), 100),
-	}
-	w.ch.handler = func(ctx context.Context, count int, data interface{}) {
-		bs := data.([]byte)
-		req, err := http.NewRequest(w.method, w.url, bytes.NewBuffer(bs))
-		if err == nil {
-			w.Client.Do(req)
-		}
-	}
-	return w, nil
 }

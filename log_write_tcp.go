@@ -16,27 +16,44 @@ import (
 type tcpClient struct {
 	net.Conn
 	ch *_chan
+
+	//消息序号,用于监测数据是否丢失
+	index    uint8
+	useIndex bool
 }
 
 func (this *tcpClient) Write(p []byte) (int, error) {
+	if this.useIndex {
+		p = append([]byte{this.index}, p...)
+		this.index++
+	}
 	return len(p), this.ch.Try(p)
 }
 
 // NewTCPClient 推送至指定TCP服务器,断线重连
-func NewTCPClient(addr string) (io.Writer, error) {
+func NewTCPClient(addr string, useIndex ...bool) (io.Writer, error) {
 	c, err := net.Dial("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
-	t := &tcpClient{Conn: c, ch: newChan(context.Background(), 100)}
+	t := &tcpClient{
+		Conn:     c,
+		ch:       newChan(context.Background(), 100),
+		useIndex: len(useIndex) > 0 && useIndex[0],
+	}
 	t.ch.handler = func(ctx context.Context, count int, data interface{}) {
+		if t.Conn == nil {
+			var err error
+			t.Conn, err = net.Dial("tcp", t.Conn.RemoteAddr().String())
+			if err != nil {
+				return
+			}
+		}
 		p := data.([]byte)
 		_, err := t.Conn.Write(p)
 		if err != nil {
-			c, err := net.Dial("tcp", t.Conn.RemoteAddr().String())
-			if err == nil {
-				t.Conn = c
-			}
+			t.Conn.Close()
+			t.Conn = nil
 		}
 	}
 	return t, nil
@@ -97,6 +114,10 @@ type tcpServer struct {
 	conn     map[string]net.Conn
 	mu       sync.RWMutex
 	ch       *_chan
+
+	//消息序号,用于监测数据是否丢失
+	index    uint8
+	useIndex bool
 }
 
 func (this *tcpServer) run() {
@@ -130,11 +151,15 @@ func (this *tcpServer) delConn(key ...string) {
 }
 
 func (this *tcpServer) Write(p []byte) (int, error) {
+	if this.useIndex {
+		p = append([]byte{this.index}, p...)
+		this.index++
+	}
 	return len(p), this.ch.Try(p)
 }
 
 // NewTCPServer 推送至TCP所有连接的客户端
-func NewTCPServer(port int) (io.Writer, error) {
+func NewTCPServer(port int, useIndex ...bool) (io.Writer, error) {
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 
@@ -146,6 +171,7 @@ func NewTCPServer(port int) (io.Writer, error) {
 		listener: listener,
 		conn:     make(map[string]net.Conn),
 		ch:       newChan(context.Background(), 100),
+		useIndex: len(useIndex) > 0 && useIndex[0],
 	}
 
 	writer.ch.handler = func(ctx context.Context, count int, data interface{}) {
