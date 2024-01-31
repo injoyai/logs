@@ -251,14 +251,15 @@ func (this *Entity) Println(v ...interface{}) (int, error) {
 // Write 实现io.Writer
 func (this *Entity) Write(p []byte) (n int, err error) {
 	for _, w := range this.Writer {
+		bs := p
 		if w == nil {
 			return
 		}
 		if val, ok := w.(interface{ Color() bool }); ok && val.Color() && this.ShowColor {
-			p = []byte(color.New(this.Color).Sprint(string(p)))
+			bs = []byte(color.New(this.Color).Sprint(string(p)))
 		}
 		for i := 0; i < 3; i++ {
-			n, err = w.Write(p)
+			n, err = w.Write(bs)
 			if err == nil {
 				break
 			}

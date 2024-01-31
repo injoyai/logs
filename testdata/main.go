@@ -25,7 +25,7 @@ func main() {
 	logs.Err(err)
 	w2, err := logs.NewTCPServer(10086)
 	logs.Err(err)
-	logs.AddWriter(w, w2)
+	logs.AddWriter(logs.NewWriteColor(w), w2)
 	<-time.After(time.Second * 5)
 
 	logs.Stdout.EnableFilter()
