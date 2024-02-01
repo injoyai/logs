@@ -190,16 +190,36 @@ func PanicErr(err error) bool {
 	return err != nil
 }
 
-// Trace 预设追溯 蓝色
+// Spend 记录耗时,使用方式 defer Spend()()
+func Spend(prefix ...interface{}) func() {
+	now := time.Now()
+	return func() {
+		DefaultDebug.Println(fmt.Sprint(prefix...) + time.Now().Sub(now).String())
+	}
+}
+
+// Trace 预设追溯 绿色
 // [追溯] 2022/01/08 10:44:02 init_test.go:10:
 func Trace(s ...interface{}) (int, error) {
 	return DefaultTrace.Println(s...)
 }
 
-// Tracef 预设细微 蓝色
+// Tracef 预设追溯 绿色
 // [追溯] 2022/01/08 10:44:02 init_test.go:10:
 func Tracef(format string, s ...interface{}) (int, error) {
 	return DefaultTrace.Printf(format, s...)
+}
+
+// Debug 预设调试 黄色
+// [调试] 2022/01/08 10:44:02 init_test.go:10:
+func Debug(s ...interface{}) (int, error) {
+	return DefaultDebug.Println(s...)
+}
+
+// Debugf 预设调试 黄色
+// [调试] 2022/01/08 10:44:02 init_test.go:10:
+func Debugf(format string, s ...interface{}) (int, error) {
+	return DefaultDebug.Printf(format, s...)
 }
 
 // Read 预设读取 蓝色
@@ -238,18 +258,6 @@ func Infof(format string, s ...interface{}) (int, error) {
 	return DefaultInfo.Printf(format, s...)
 }
 
-// Debug 预设调试 黄色
-// [调试] 2022/01/08 10:44:02 init_test.go:10:
-func Debug(s ...interface{}) (int, error) {
-	return DefaultDebug.Println(s...)
-}
-
-// Debugf 预设调试 黄色
-// [调试] 2022/01/08 10:44:02 init_test.go:10:
-func Debugf(format string, s ...interface{}) (int, error) {
-	return DefaultDebug.Printf(format, s...)
-}
-
 // Warn 预设警告
 // [警告] 2022/01/08 10:44:02 init_test.go:10:
 func Warn(s ...interface{}) (int, error) {
@@ -285,14 +293,7 @@ func Errf(format string, s ...interface{}) (int, error) {
 	return DefaultErr.Printf(format, s...)
 }
 
-func Spend(prefix ...interface{}) func() {
-	now := time.Now()
-	return func() {
-		DefaultDebug.Println(fmt.Sprint(prefix...) + time.Now().Sub(now).String())
-	}
-}
-
-// Panic 预设调试 红色
+// Panic 预设错误 红色
 // [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Panic(s ...interface{}) (int, error) {
 	msg := fmt.Sprint(s...)
@@ -301,8 +302,8 @@ func Panic(s ...interface{}) (int, error) {
 	return n, err
 }
 
-// Panicf 预设调试 红色
-// [致命] 2022/01/08 10:44:02 init_test.go:10:
+// Panicf 预设错误 红色
+// [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Panicf(format string, s ...interface{}) (int, error) {
 	msg := fmt.Sprintf(format, s...)
 	n, err := DefaultErr.Println(msg)
@@ -310,15 +311,15 @@ func Panicf(format string, s ...interface{}) (int, error) {
 	return n, err
 }
 
-// Fatal 预设调试 红色
-// [致命] 2022/01/08 10:44:02 init_test.go:10:
+// Fatal 预设错误 红色
+// [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Fatal(s ...interface{}) (int, error) {
 	defer os.Exit(-127)
 	return DefaultErr.Println(s...)
 }
 
-// Fatalf 预设调试 红色
-// [致命] 2022/01/08 10:44:02 init_test.go:10:
+// Fatalf 预设错误 红色
+// [错误] 2022/01/08 10:44:02 init_test.go:10:
 func Fatalf(format string, s ...interface{}) (int, error) {
 	defer os.Exit(-127)
 	return DefaultErr.Printf(format, s...)
