@@ -5,6 +5,7 @@ import (
 	"github.com/fatih/color"
 	"io"
 	"os"
+	"strings"
 )
 
 type Level uint8
@@ -20,6 +21,31 @@ const (
 	LevelError
 	LevelNone Level = 255
 )
+
+func GetLevel(s string) Level {
+	switch strings.ToLower(s) {
+	case "all":
+		return LevelAll
+	case "trace":
+		return LevelTrace
+	case "debug":
+		return LevelDebug
+	case "write":
+		return LevelWrite
+	case "read":
+		return LevelRead
+	case "info":
+		return LevelInfo
+	case "warn":
+		return LevelWarn
+	case "err", "error":
+		return LevelError
+	case "none":
+		return LevelNone
+	default:
+		return LevelAll
+	}
+}
 
 // NewEntity 默认写到控制台和消息总线
 func NewEntity(name string) *Entity {
