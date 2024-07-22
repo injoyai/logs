@@ -22,7 +22,7 @@ const (
 	LevelNone Level = 255
 )
 
-func GetLevel(s string) Level {
+func ParseLevel(s string) Level {
 	switch strings.ToLower(s) {
 	case "all":
 		return LevelAll
