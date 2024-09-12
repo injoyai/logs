@@ -28,7 +28,7 @@ var (
 	DefaultInfo  = NewEntity("信息").SetSelfLevel(LevelInfo).setCaller(1).SetColor(color.FgCyan)
 	DefaultDebug = NewEntity("调试").SetSelfLevel(LevelDebug).setCaller(1).SetColor(color.FgYellow)
 	DefaultWarn  = NewEntity("警告").SetSelfLevel(LevelWarn).setCaller(1).SetColor(color.FgMagenta)
-	DefaultErr   = NewEntity("错误").SetSelfLevel(LevelError).setCaller(1).SetColor(color.FgRed).WriteToFile(DefaultDir, DefaultLayout)
+	DefaultErr   = NewEntity("错误").SetSelfLevel(LevelError).setCaller(1).SetColor(color.FgRed) //.WriteToFile(DefaultDir, DefaultLayout)
 
 	// Trunk 消息总线,公共Writer,
 	Trunk = newTrunk(1000)
