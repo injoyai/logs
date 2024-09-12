@@ -55,7 +55,7 @@ func NewEntity(name string) *Entity {
 		Color:     0,
 		ShowColor: true,
 		caller:    0,
-		Writer:    []io.Writer{Stdout, Trunk},
+		Writer:    []io.Writer{Stdout}, // Trunk},
 		Formatter: DefaultFormatter,
 		Level:     LevelAll,
 		SelfLevel: LevelNone,
