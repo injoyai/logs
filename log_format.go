@@ -74,8 +74,8 @@ func (this *formatter) Formatter(e *Entity, msg string) string {
 
 type FormatFunc func(e *Entity, msg string) string
 
-func (thiS FormatFunc) Formatter(e *Entity, msg string) string {
-	return thiS(e, msg)
+func (this FormatFunc) Formatter(e *Entity, msg string) string {
+	return this(e, msg)
 }
 
 func timeFormatter(e *Entity, msg string) string {
