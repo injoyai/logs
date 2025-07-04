@@ -20,9 +20,19 @@ type IFormatter interface {
 
 var (
 	// DefaultFormatter 默认格式化可修改
-	DefaultFormatter = &formatter{flag: log.Ldate | log.Ltime | log.Lshortfile}
+	DefaultFormatter = FDefault
 
-	TimeFormatter FormatFunc = timeFormatter
+	// FDefault 默认格式化
+	FDefault = &formatter{flag: log.Ldate | log.Ltime | log.Lshortfile}
+
+	// TimeFormatter 时间格式化
+	TimeFormatter = FTime
+
+	// FTime 时间格式化
+	FTime FormatFunc = timeFormatter
+
+	// FOriginal 原始格式化
+	FOriginal FormatFunc = originFormatter
 )
 
 // 默认输出
@@ -59,7 +69,7 @@ func (this *formatter) Formatter(e *Entity, msg string) string {
 	msg = tag + msg
 	prefix := ""
 	if len(e.Name) > 0 {
-		prefix = "[" + e.Name + "]"
+		prefix = "[" + e.Name + "] "
 	}
 
 	hasLn := len(msg) > 0 && msg[len(msg)-1] == '\n'
@@ -98,5 +108,9 @@ func timeFormatter(e *Entity, msg string) string {
 	if len(msg) > 0 && msg[len(msg)-1] == '\n' && !hasLn {
 		msg = msg[:len(msg)-1]
 	}
+	return msg
+}
+
+func originFormatter(e *Entity, msg string) string {
 	return msg
 }
