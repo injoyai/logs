@@ -8,6 +8,20 @@ import (
 
 func main() {
 
+	logs.Red("red")
+	logs.Green("green")
+	logs.Blue("blue")
+	logs.Yellow("yellow")
+	logs.Magenta("magenta")
+	logs.Cyan("cyan")
+	//logs.SetFormatter(logs.TimeFormatter)
+	//logs.Red("red")
+	//logs.Green("green")
+	//logs.Blue("blue")
+	//logs.Yellow("yellow")
+	//logs.Magenta("magenta")
+	//logs.Cyan("cyan")
+
 	logs.Info("测试xxln,xxf,write")
 	logs.Debugf("不换行")
 	logs.Debugf("换行\n")

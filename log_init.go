@@ -15,14 +15,20 @@ const (
 )
 
 var (
-	m            = sync.Map{}
-	DefaultTrace = NewEntity("追溯").SetSelfLevel(LevelTrace).setCaller(1).SetColor(color.FgGreen)
-	DefaultWrite = NewEntity("写入").SetSelfLevel(LevelWrite).setCaller(1).SetColor(color.FgBlue)
-	DefaultRead  = NewEntity("读取").SetSelfLevel(LevelRead).setCaller(1).SetColor(color.FgBlue)
-	DefaultInfo  = NewEntity("信息").SetSelfLevel(LevelInfo).setCaller(1).SetColor(color.FgCyan)
-	DefaultDebug = NewEntity("调试").SetSelfLevel(LevelDebug).setCaller(1).SetColor(color.FgYellow)
-	DefaultWarn  = NewEntity("警告").SetSelfLevel(LevelWarn).setCaller(1).SetColor(color.FgMagenta)
-	DefaultErr   = NewEntity("错误").SetSelfLevel(LevelError).setCaller(1).SetColor(color.FgRed) //.WriteToFile(DefaultDir, DefaultLayout)
+	m              = sync.Map{}
+	DefaultTrace   = NewEntity("追溯").SetSelfLevel(LevelTrace).setCaller(1).SetColor(color.FgGreen)
+	DefaultWrite   = NewEntity("写入").SetSelfLevel(LevelWrite).setCaller(1).SetColor(color.FgBlue)
+	DefaultRead    = NewEntity("读取").SetSelfLevel(LevelRead).setCaller(1).SetColor(color.FgBlue)
+	DefaultInfo    = NewEntity("信息").SetSelfLevel(LevelInfo).setCaller(1).SetColor(color.FgCyan)
+	DefaultDebug   = NewEntity("调试").SetSelfLevel(LevelDebug).setCaller(1).SetColor(color.FgYellow)
+	DefaultWarn    = NewEntity("警告").SetSelfLevel(LevelWarn).setCaller(1).SetColor(color.FgMagenta)
+	DefaultErr     = NewEntity("错误").SetSelfLevel(LevelError).setCaller(1).SetColor(color.FgRed) //.WriteToFile(DefaultDir, DefaultLayout)
+	DefaultRed     = NewEntity("").SetFormatter(FOriginal).SetSelfLevel(LevelInfo).setCaller(1).SetColor(color.FgRed)
+	DefaultYellow  = NewEntity("").SetFormatter(FOriginal).SetSelfLevel(LevelInfo).setCaller(1).SetColor(color.FgYellow)
+	DefaultBlue    = NewEntity("").SetFormatter(FOriginal).SetSelfLevel(LevelInfo).setCaller(1).SetColor(color.FgBlue)
+	DefaultGreen   = NewEntity("").SetFormatter(FOriginal).SetSelfLevel(LevelInfo).setCaller(1).SetColor(color.FgGreen)
+	DefaultCyan    = NewEntity("").SetFormatter(FOriginal).SetSelfLevel(LevelInfo).setCaller(1).SetColor(color.FgCyan)
+	DefaultMagenta = NewEntity("").SetFormatter(FOriginal).SetSelfLevel(LevelInfo).setCaller(1).SetColor(color.FgMagenta)
 
 	// Trunk 消息总线,公共Writer,
 	Trunk = newTrunk(1000)
@@ -41,6 +47,12 @@ func init() {
 	m.Store(DefaultWarn.GetName(), DefaultWarn)
 	m.Store(DefaultErr.GetName(), DefaultErr)
 
+	m.Store("red", DefaultRed)
+	m.Store("yellow", DefaultYellow)
+	m.Store("blue", DefaultBlue)
+	m.Store("green", DefaultGreen)
+	m.Store("cyan", DefaultCyan)
+	m.Store("magenta", DefaultMagenta)
 }
 
 // New 新建,传入前缀
@@ -153,11 +165,11 @@ func SetFormatter(f IFormatter) {
 
 // SetFormatterWithDefault 设置输出格式为默认
 func SetFormatterWithDefault() {
-	SetFormatter(DefaultFormatter)
+	SetFormatter(FDefault)
 }
 
 func SetFormatterWithTime() {
-	SetFormatter(TimeFormatter)
+	SetFormatter(FTime)
 }
 
 // SetSaveTime 设置保存时间,默认按天(即设置秒,用默认格式相当于1天)
@@ -317,4 +329,60 @@ func Fatal(s ...interface{}) (int, error) {
 func Fatalf(format string, s ...interface{}) (int, error) {
 	defer os.Exit(-127)
 	return DefaultErr.Printf(format, s...)
+}
+
+func Red(s ...interface{}) (int, error) {
+	return DefaultRed.Println(s...)
+}
+
+func Redf(format string, s ...interface{}) (int, error) {
+	return DefaultRed.Printf(format, s...)
+}
+
+func Yellow(s ...interface{}) (int, error) {
+	return DefaultYellow.Println(s...)
+}
+
+func Yellowf(format string, s ...interface{}) (int, error) {
+	return DefaultYellow.Printf(format, s...)
+}
+
+func Blue(s ...interface{}) (int, error) {
+	return DefaultBlue.Println(s...)
+}
+
+func Bluef(format string, s ...interface{}) (int, error) {
+	return DefaultBlue.Printf(format, s...)
+}
+
+func Green(s ...interface{}) (int, error) {
+	return DefaultGreen.Println(s...)
+}
+
+func Greenf(format string, s ...interface{}) (int, error) {
+	return DefaultGreen.Printf(format, s...)
+}
+
+func Cyan(s ...interface{}) (int, error) {
+	return DefaultCyan.Println(s...)
+}
+
+func Cyanf(format string, s ...interface{}) (int, error) {
+	return DefaultCyan.Printf(format, s...)
+}
+
+func Magenta(s ...interface{}) (int, error) {
+	return DefaultMagenta.Println(s...)
+}
+
+func Magentaf(format string, s ...interface{}) (int, error) {
+	return DefaultMagenta.Printf(format, s...)
+}
+
+func Println(s ...interface{}) (int, error) {
+	return fmt.Println(s...)
+}
+
+func Printf(format string, s ...interface{}) (int, error) {
+	return fmt.Printf(format, s...)
 }
