@@ -12,36 +12,17 @@ import (
 
 //==============================TCP==============================
 
-// tcpClient tcp客户端
-type tcpClient struct {
-	net.Conn
-	ch *_chan
-
-	//消息序号,用于监测数据是否丢失
-	index    uint8
-	useIndex bool
-}
-
-func (this *tcpClient) Write(p []byte) (int, error) {
-	if this.useIndex {
-		p = append([]byte{this.index}, p...)
-		this.index++
-	}
-	return len(p), this.ch.Try(p)
-}
-
 // NewTCPClient 推送至指定TCP服务器,断线重连
-func NewTCPClient(addr string, useIndex ...bool) (io.Writer, error) {
+func NewTCPClient(addr string) (io.Writer, error) {
 	c, err := net.Dial("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
 	t := &tcpClient{
-		Conn:     c,
-		ch:       newChan(context.Background(), 100),
-		useIndex: len(useIndex) > 0 && useIndex[0],
+		Conn: c,
+		Chan: newChan(context.Background(), 100),
 	}
-	t.ch.handler = func(ctx context.Context, count int, data interface{}) {
+	t.Chan.handler = func(ctx context.Context, count int, bs []byte) {
 		if t.Conn == nil {
 			var err error
 			t.Conn, err = net.Dial("tcp", t.Conn.RemoteAddr().String())
@@ -49,14 +30,23 @@ func NewTCPClient(addr string, useIndex ...bool) (io.Writer, error) {
 				return
 			}
 		}
-		p := data.([]byte)
-		_, err := t.Conn.Write(p)
+		_, err := t.Conn.Write(bs)
 		if err != nil {
 			t.Conn.Close()
 			t.Conn = nil
 		}
 	}
 	return t, nil
+}
+
+// tcpClient tcp客户端
+type tcpClient struct {
+	net.Conn
+	*Chan
+}
+
+func (this *tcpClient) Write(p []byte) (int, error) {
+	return this.Chan.Write(p)
 }
 
 // DialTCP 监听tcp数据
@@ -109,15 +99,47 @@ func DialTCP(addr string, dealFunc func(p []byte)) error {
 	return nil
 }
 
+/*
+
+
+
+ */
+
+// NewTCPServer 推送至TCP所有连接的客户端
+func NewTCPServer(port int) (io.Writer, error) {
+
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+
+	if err != nil {
+		return nil, err
+	}
+
+	writer := &tcpServer{
+		listener: listener,
+		conn:     make(map[string]net.Conn),
+		Chan:     newChan(context.Background(), 100),
+	}
+
+	writer.Chan.handler = func(ctx context.Context, count int, bs []byte) {
+		errKey := []string(nil)
+		for i, v := range writer.getConn() {
+			if _, err := v.Write(bs); err != nil {
+				errKey = append(errKey, i)
+			}
+		}
+		writer.delConn(errKey...)
+	}
+
+	go writer.run()
+
+	return writer, nil
+}
+
 type tcpServer struct {
 	listener net.Listener
 	conn     map[string]net.Conn
 	mu       sync.RWMutex
-	ch       *_chan
-
-	//消息序号,用于监测数据是否丢失
-	index    uint8
-	useIndex bool
+	*Chan
 }
 
 func (this *tcpServer) run() {
@@ -148,44 +170,4 @@ func (this *tcpServer) delConn(key ...string) {
 		delete(this.conn, v)
 	}
 	this.mu.Unlock()
-}
-
-func (this *tcpServer) Write(p []byte) (int, error) {
-	if this.useIndex {
-		p = append([]byte{this.index}, p...)
-		this.index++
-	}
-	return len(p), this.ch.Try(p)
-}
-
-// NewTCPServer 推送至TCP所有连接的客户端
-func NewTCPServer(port int, useIndex ...bool) (io.Writer, error) {
-
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-
-	if err != nil {
-		return nil, err
-	}
-
-	writer := &tcpServer{
-		listener: listener,
-		conn:     make(map[string]net.Conn),
-		ch:       newChan(context.Background(), 100),
-		useIndex: len(useIndex) > 0 && useIndex[0],
-	}
-
-	writer.ch.handler = func(ctx context.Context, count int, data interface{}) {
-		p := data.([]byte)
-		errKey := []string(nil)
-		for i, v := range writer.getConn() {
-			if _, err := v.Write(p); err != nil {
-				errKey = append(errKey, i)
-			}
-		}
-		writer.delConn(errKey...)
-	}
-
-	go writer.run()
-
-	return writer, nil
 }
