@@ -2,7 +2,10 @@ package logs
 
 import (
 	"bytes"
+	"encoding/json"
 	"log"
+	"strings"
+	"time"
 )
 
 /*
@@ -31,8 +34,8 @@ var (
 	// FTime 时间格式化
 	FTime FormatFunc = timeFormatter
 
-	// FOriginal 原始格式化
-	FOriginal FormatFunc = originFormatter
+	// FJson json格式化
+	FJson FormatFunc = jsonFormatter
 )
 
 // 默认输出
@@ -59,14 +62,7 @@ func (this *formatter) Formatter(e *Entity, msg string) string {
 		return this.formatter(e, msg)
 	}
 	writer := bytes.NewBuffer(nil)
-	var tag string
-	for i, v := range e.Tag {
-		tag += "[" + v + "]"
-		if i == len(e.Tag)-1 {
-			tag += " "
-		}
-	}
-	msg = tag + msg
+	msg = buildTag(e.Tag) + msg
 	prefix := ""
 	if len(e.Name) > 0 {
 		prefix = "[" + e.Name + "] "
@@ -88,16 +84,20 @@ func (this FormatFunc) Formatter(e *Entity, msg string) string {
 	return this(e, msg)
 }
 
+func jsonFormatter(e *Entity, msg string) string {
+	logMap := map[string]interface{}{
+		"level": e.Name,
+		"time":  time.Now().Format(time.RFC3339),
+		"tag":   e.Tag,
+		"msg":   msg,
+	}
+	b, _ := json.Marshal(logMap)
+	return string(b)
+}
+
 func timeFormatter(e *Entity, msg string) string {
 	writer := bytes.NewBuffer(nil)
-	var tag string
-	for i, v := range e.Tag {
-		tag += "[" + v + "]"
-		if i == len(e.Tag)-1 {
-			tag += " "
-		}
-	}
-	msg = tag + msg
+	msg = buildTag(e.Tag) + msg
 	if len(e.Name) > 0 {
 		msg = "[" + e.Name + "] " + msg
 	}
@@ -111,6 +111,10 @@ func timeFormatter(e *Entity, msg string) string {
 	return msg
 }
 
-func originFormatter(e *Entity, msg string) string {
-	return msg
+func buildTag(tags []string) string {
+	var b strings.Builder
+	for _, t := range tags {
+		b.WriteString("[" + t + "]")
+	}
+	return b.String()
 }

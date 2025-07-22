@@ -2,10 +2,12 @@ package logs
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -31,6 +33,10 @@ type File struct {
 	file      io.WriteCloser //文件流
 	filesize  int64          //当前文件大小
 	fileIndex int            //文件分片序号
+
+	lastOriginFilename string     //缓存上一次的文件名称
+	lastTime           time.Time  //缓存上一次的时间
+	mu                 sync.Mutex //并发锁
 }
 
 func (this *File) addIndex(filename string) string {
@@ -39,10 +45,19 @@ func (this *File) addIndex(filename string) string {
 	}
 	name := filepath.Base(filename)
 	ext := filepath.Ext(filename)
-	return filepath.Join(
-		filepath.Dir(filename),
-		name[:len(name)-len(ext)]+"-"+strconv.Itoa(this.fileIndex)+filepath.Ext(filename),
-	)
+	return filepath.Join(filepath.Dir(filename), name[:len(name)-len(ext)]+"-"+strconv.Itoa(this.fileIndex)+ext)
+}
+
+func (this *File) getOriginFilename() string {
+	now := time.Now()
+	if now.Minute() == this.lastTime.Minute() &&
+		now.Hour() == this.lastTime.Hour() &&
+		now.Day() == this.lastTime.Day() {
+		return this.lastOriginFilename
+	}
+	this.lastTime = now
+	this.lastOriginFilename = now.Format(this.Filename)
+	return this.lastOriginFilename
 }
 
 func (this *File) open(filename string) error {
@@ -65,15 +80,19 @@ func (this *File) open(filename string) error {
 
 func (this *File) close() error {
 	if this.file != nil {
-		return this.file.Close()
+		err := this.file.Close()
+		this.file = nil
+		return err
 	}
 	return nil
 }
 
 func (this *File) Write(p []byte) (int, error) {
+	this.mu.Lock()
+	defer this.mu.Unlock()
 
-	//生成文件名, todo 这里是否耗时严重?
-	originFilename := time.Now().Format(this.Filename)
+	//生成文件名
+	originFilename := this.getOriginFilename()
 	filename := this.addIndex(originFilename)
 
 	//判断设置的文件地址是否有效
@@ -82,7 +101,7 @@ func (this *File) Write(p []byte) (int, error) {
 	}
 
 	//判断文件夹是否存在,不存在则新建
-	os.MkdirAll(filepath.Dir(filename), 0666)
+	os.MkdirAll(filepath.Dir(filename), 0755)
 
 	if this.file == nil || filename != this.filename ||
 		this.MaxSize > 0 && this.filesize+int64(len(p)) > this.MaxSize {
@@ -116,7 +135,7 @@ func (this *File) Write(p []byte) (int, error) {
 	//写入数据
 	n, err := this.file.Write(p)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("写入文件 %s 失败: %w", this.filename, err)
 	}
 
 	//记录文件大小

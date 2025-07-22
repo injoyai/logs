@@ -75,11 +75,19 @@ type Entity struct {
 	Formatter  IFormatter      //格式
 	Level      Level           //日志等级
 	SelfLevel  Level           //自身日志等级
+	Retry      int             //重试次数
 }
 
 // SetFormatter 设置格式化函数
 func (this *Entity) SetFormatter(f IFormatter) *Entity {
-	this.Formatter = f
+	if f != nil {
+		this.Formatter = f
+	}
+	return this
+}
+
+func (this *Entity) SetRetry(retry int) *Entity {
+	this.Retry = retry
 	return this
 }
 
@@ -218,9 +226,6 @@ func (this *Entity) Sprintf(format string, v ...interface{}) string {
 	if this.Formatter == nil {
 		this.Formatter = DefaultFormatter
 	}
-	if this.Formatter == nil {
-		this.Formatter = new(formatter)
-	}
 	return this.Formatter.Formatter(this, fmt.Sprintf(format, v...))
 }
 
@@ -229,9 +234,6 @@ func (this *Entity) Sprint(v ...interface{}) string {
 	if this.Formatter == nil {
 		this.Formatter = DefaultFormatter
 	}
-	if this.Formatter == nil {
-		this.Formatter = new(formatter)
-	}
 	return this.Formatter.Formatter(this, fmt.Sprint(v...))
 }
 
@@ -239,37 +241,34 @@ func (this *Entity) Sprintln(v ...interface{}) string {
 	if this.Formatter == nil {
 		this.Formatter = DefaultFormatter
 	}
-	if this.Formatter == nil {
-		this.Formatter = new(formatter)
-	}
 	return this.Formatter.Formatter(this, fmt.Sprintln(v...))
 }
 
 // Printf 格式化写入
 func (this *Entity) Printf(format string, v ...interface{}) (int, error) {
-	if this.SelfLevel >= this.Level {
-		msg := []byte(this.Sprintf(format, v...))
-		return this.Write(msg)
+	if this.Level > this.SelfLevel {
+		return 0, nil
 	}
-	return 0, nil
+	msg := []byte(this.Sprintf(format, v...))
+	return this.Write(msg)
 }
 
 // Print 写入内容
 func (this *Entity) Print(v ...interface{}) (int, error) {
-	if this.SelfLevel >= this.Level {
-		msg := []byte(this.Sprint(v...))
-		return this.Write(msg)
+	if this.Level > this.SelfLevel {
+		return 0, nil
 	}
-	return 0, nil
+	msg := []byte(this.Sprint(v...))
+	return this.Write(msg)
 }
 
 // Println 写入内容,换行
 func (this *Entity) Println(v ...interface{}) (int, error) {
-	if this.SelfLevel >= this.Level {
-		msg := []byte(this.Sprintln(v...))
-		return this.Write(msg)
+	if this.Level > this.SelfLevel {
+		return 0, nil
 	}
-	return 0, nil
+	msg := []byte(this.Sprintln(v...))
+	return this.Write(msg)
 }
 
 // Write 实现io.Writer
@@ -277,12 +276,12 @@ func (this *Entity) Write(p []byte) (n int, err error) {
 	for _, w := range this.Writer {
 		bs := p
 		if w == nil {
-			return
+			continue
 		}
-		if val, ok := w.(interface{ Color() bool }); ok && val.Color() && this.ShowColor {
+		if this.ShowColor && this.isColorWriter(w) {
 			bs = []byte(color.New(this.Color).Sprint(string(p)))
 		}
-		for i := 0; i < 3; i++ {
+		for i := 0; i <= this.Retry; i++ {
 			n, err = w.Write(bs)
 			if err == nil {
 				break
@@ -290,4 +289,11 @@ func (this *Entity) Write(p []byte) (n int, err error) {
 		}
 	}
 	return
+}
+
+func (this *Entity) isColorWriter(w io.Writer) bool {
+	if val, ok := w.(interface{ Color() bool }); ok {
+		return val.Color()
+	}
+	return false
 }
