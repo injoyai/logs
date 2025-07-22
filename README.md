@@ -29,7 +29,7 @@ func main() {
 	logs.SetShowColor()
 
 	//自定义日志,并写入文件 结果: [测试] 2024-02-01 08:02:05 Test
-	t := logs.New("测试").WriteToFile(logs.DefaultDir, logs.DefaultLayout)
+	t := logs.New("测试").WriteToFile("./output/logs/{type}.log")
 	t.Println("Test")
 
 	//全局设置自定义打印模板   
@@ -44,10 +44,7 @@ func main() {
 	logs.PanicErr(err)
 	//全局设置日志输出到io.Writer
 	logs.AddWriter(w)
-
-	//设置日志保存时间,使用默认日志文件位置有效,保存到其他位置需要自行处理
-	logs.SetSaveTime(time.Hour*24)
-
+	
 }
 
 ```
