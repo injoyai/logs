@@ -39,13 +39,13 @@ type File struct {
 	mu                 sync.Mutex //并发锁
 }
 
-func (this *File) addIndex(filename string) string {
-	if this.fileIndex == 0 {
+func (this *File) addIndex(filename string, index int) string {
+	if index == 0 {
 		return filename
 	}
 	name := filepath.Base(filename)
 	ext := filepath.Ext(filename)
-	return filepath.Join(filepath.Dir(filename), name[:len(name)-len(ext)]+"-"+strconv.Itoa(this.fileIndex)+ext)
+	return filepath.Join(filepath.Dir(filename), name[:len(name)-len(ext)]+"-"+strconv.Itoa(index)+ext)
 }
 
 func (this *File) getOriginFilename() string {
@@ -93,7 +93,7 @@ func (this *File) Write(p []byte) (int, error) {
 
 	//生成文件名
 	originFilename := this.getOriginFilename()
-	filename := this.addIndex(originFilename)
+	filename := this.addIndex(originFilename, this.fileIndex)
 
 	//判断设置的文件地址是否有效
 	if len(filename) == 0 {
@@ -117,12 +117,20 @@ func (this *File) Write(p []byte) (int, error) {
 
 		//生成带后缀的文件名称
 		for ; ; this.fileIndex++ {
-			filename = this.addIndex(originFilename)
+			filename = this.addIndex(originFilename, this.fileIndex)
 			//获取文件信息
-			_, err := os.Stat(filename)
+			info, err := os.Stat(filename)
 			if err != nil && !os.IsNotExist(err) {
 				return 0, err
 			} else if os.IsNotExist(err) {
+				break
+			}
+
+			//判断下一个序号是否存在,不存在则说明当前这个是最后(最新)一个文件,打开判断大小
+			_, err = os.Stat(this.addIndex(originFilename, this.fileIndex+1))
+			if err != nil && !os.IsNotExist(err) {
+				return 0, err
+			} else if err != nil && (info.Size() < this.MaxSize || this.MaxSize <= 0) {
 				break
 			}
 		}

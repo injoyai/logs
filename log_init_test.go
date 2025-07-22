@@ -6,7 +6,7 @@ import (
 )
 
 func TestSetWriter(t *testing.T) {
-	f := NewFile("./output/logs/debug.log")
+	f := NewFile("./output/logs/debug.log", 2<<20)
 	DefaultDebug.SetWriter(f)
 	for {
 		Debug(make([]byte, 1024))
