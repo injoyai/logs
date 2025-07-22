@@ -33,19 +33,19 @@ func (this *trunk) Write(p []byte) (int, error) {
 func (this *trunk) Publish(data ...[]byte) {
 	for _, sub := range this.subscribe {
 		if sub != nil {
-			sub.try(data)
+			sub.try(data...)
 		}
 	}
 }
 
 // Subscribe 订阅消息总线
-func (this *trunk) Subscribe(bufSize int, handler func(data interface{})) string {
+func (this *trunk) Subscribe(bufSize int, handler func(data []byte)) string {
 	key := fmt.Sprintf("%p-%p-%d", this, handler, time.Now().UnixNano())
 	ctx, cancel := context.WithCancel(context.Background())
 	sub := &trunkSubscribe{
 		key:     key,
 		handler: handler,
-		c:       make(chan interface{}, bufSize),
+		c:       make(chan []byte, bufSize),
 		ctx:     ctx,
 		cancel:  cancel,
 	}
@@ -73,13 +73,13 @@ func (this *trunk) Unsubscribe(key string) bool {
 
 type trunkSubscribe struct {
 	key     string
-	handler func(data interface{})
-	c       chan interface{}
+	handler func(data []byte)
+	c       chan []byte
 	ctx     context.Context
 	cancel  context.CancelFunc
 }
 
-func (this *trunkSubscribe) try(data ...interface{}) {
+func (this *trunkSubscribe) try(data ...[]byte) {
 	for _, v := range data {
 		select {
 		case <-this.ctx.Done():
