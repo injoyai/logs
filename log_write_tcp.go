@@ -25,7 +25,7 @@ func NewTCPClient(addr string) (io.Writer, error) {
 	t.Chan.handler = func(ctx context.Context, count int, bs []byte) {
 		if t.Conn == nil {
 			var err error
-			t.Conn, err = net.Dial("tcp", t.Conn.RemoteAddr().String())
+			t.Conn, err = net.Dial("tcp", addr)
 			if err != nil {
 				return
 			}
