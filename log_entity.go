@@ -55,7 +55,7 @@ func NewEntity(name string) *Entity {
 		Color:     0,
 		ShowColor: true,
 		caller:    0,
-		Writer:    []io.Writer{Stdout}, // Trunk},
+		Writer:    []io.Writer{Stdout},
 		Formatter: DefaultFormatter,
 		Level:     LevelAll,
 		SelfLevel: LevelNone,
@@ -63,7 +63,7 @@ func NewEntity(name string) *Entity {
 	return data
 }
 
-// Entity [信息]2020-01-02
+// Entity [信息] 2020-01-02
 type Entity struct {
 	Name       string          //名称,例如 "INFO"
 	Tag        []string        //标签.例如 "TCP"
@@ -164,9 +164,10 @@ func (this *Entity) WriteToConsole() *Entity {
 	return this
 }
 
-// WriteToFile 输出到文件 默认"./output/logs/2006-01-02/{name}_15.log"
-func (this *Entity) WriteToFile(dir, layout string) *Entity {
-	this.AddWriter(NewFile(this.Name, dir, layout))
+// WriteToFile 输出到文件 例"./output/logs/2006-01-02/{type}_15.log"
+func (this *Entity) WriteToFile(filename string) *Entity {
+	filename = strings.ReplaceAll(filename, "{type}", this.Name)
+	this.AddWriter(NewFile(filename, 0))
 	return this
 }
 
@@ -204,10 +205,7 @@ func (this *Entity) WriteToTCPServer(port int, color ...bool) error {
 
 // WriteToHTTPServer 写入HTTP服务器 ,color 是否传输颜色数据
 func (this *Entity) WriteToHTTPServer(method, url string, color ...bool) error {
-	writer, err := NewHTTPClient(method, url)
-	if err != nil {
-		return err
-	}
+	writer := NewHTTPClient(method, url)
 	if len(color) > 0 && color[0] {
 		writer = NewWriteColor(writer)
 	}
